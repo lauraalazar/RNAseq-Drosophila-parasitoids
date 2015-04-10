@@ -1,0 +1,18 @@
+# First create a database for the genome
+gmap_build -d sec_r1.0 dsec-all-chromosome-r1.0.fasta -D sec_ref/
+
+# Align reads to the reference, convert to bam and sort
+gsnap --nofails --novelsplicing=1 --format=sam -D ../gmap_db/sec_ref/ -d sec_r1.0
+samtools view -buS dsec6.sam > dsec6.bam
+samtools sort dsec6.bam dsec6.s
+samtools sort -n dsec6.s.bam dsec6.ss
+
+#Run augustus 
+augustus-3.0.3/auxprogs/filterBam/bin/filterBam  --paired --uniq --in dsec6.ss.bam --out dsec6.f.ba$
+samtools sort dsec6.f.bam dsec6.fs
+samtools view -H dsec6.fs.bam > dsec6.header.txt
+augustus-3.0.3/auxprogs/bam2hints/bam2hints --intronsonly --in=dsec6.fs.bam --out=dsec6.hints.gff
+#copy the extrinsicCfFile from /augustus/config/extrinsic/
+augustus --species=fly --extrinsicCfgFile=extrinsic.M.RM.E.W.cfg  --alternatives-from-evidence=true \
+--hintsfile=dsec6.hints.gff --allow_hinted_splicesites=atac  dsec-all-chromosome-r1.0.fasta > dsec6.augusuts.out
+
