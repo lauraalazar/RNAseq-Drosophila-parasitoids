@@ -10,6 +10,7 @@ The samples were collected in the summer of 2011 and sequenced in 2012 in Illumi
 3. Re-annotation
 4. Counts
 5. Differential Expression
-6. Meta-analysis
+6. Differential Exon usage
+7. Meta-analysis
 
  
