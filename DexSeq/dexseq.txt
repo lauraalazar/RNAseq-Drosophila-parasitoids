@@ -1,0 +1,7 @@
+# DexSeq needs a specific gff file and unique mapping reads (flagged in the alignment as "NH:i:1")
+
+samtools view [nsorted_dedup.bam] | fgrep -w NH:i:1 | \
+python ../dexseq_count.py ../dmel_flattened_ed.gff - sample${FILE//[![:digit:]]/}dexseq.counts; done
+
+
+
