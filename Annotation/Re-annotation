@@ -1,18 +1,28 @@
+#These steps are suggested in http://bioinf.uni-greifswald.de/bioinf/wiki/pmwiki.php?n=IncorporatingRNAseq.GSNAP
+#Genomes were downloaded from Flybase
+
 # First create a database for the genome
 gmap_build -d sec_r1.0 dsec-all-chromosome-r1.0.fasta -D sec_ref/
+gmap_build -d sim_r1.0 dsim-all-chromosome-r1.0.fasta -D sim_ref/
+gmap_build -d yak_r1.0 dyak-all-chromosome-r1.0.fasta -D yak_ref/
 
-# Align reads to the reference, convert to bam and sort
-gsnap --nofails --novelsplicing=1 --format=sam -D ../gmap_db/sec_ref/ -d sec_r1.0
-samtools view -buS dsec6.sam > dsec6.bam
-samtools sort dsec6.bam dsec6.s
-samtools sort -n dsec6.s.bam dsec6.ss
+# Align reads to the reference
+gsnap --nofails --novelsplicing=1 --format=sam -D gmap_db/sec_ref/ -d sec_r1.0
+gsnap --nofails --novelsplicing=1 --format=sam -D gmap_db/sim_ref/ -d sim_r1.0
+gsnap --nofails --novelsplicing=1 --format=sam -D gmap_db/yak_ref/ -d yak_r1.0
+
+#Convert alignment to bam and sort
+samtools view -buS sample.sam > sample.bam
+samtools sort sample.bam sample.s
+samtools sort -n sample.s.bam sample.ss
 
 #Run augustus 
-augustus-3.0.3/auxprogs/filterBam/bin/filterBam  --paired --uniq --in dsec6.ss.bam --out dsec6.f.ba$
-samtools sort dsec6.f.bam dsec6.fs
-samtools view -H dsec6.fs.bam > dsec6.header.txt
-augustus-3.0.3/auxprogs/bam2hints/bam2hints --intronsonly --in=dsec6.fs.bam --out=dsec6.hints.gff
+perlbrew use perl-5.19.9
+augustus-3.0.3/auxprogs/filterBam/bin/filterBam  --paired --uniq --in sample.ss.bam --out sample.f.bam
+samtools sort sample.f.bam sample.fs
+samtools view -H sample.fs.bam > sample.header.txt
+/augustus-3.0.3/auxprogs/bam2hints/bam2hints --intronsonly --in=sample.fs.bam --out=sample.hints.gff
 #copy the extrinsicCfFile from /augustus/config/extrinsic/
 augustus --species=fly --extrinsicCfgFile=extrinsic.M.RM.E.W.cfg  --alternatives-from-evidence=true \
---hintsfile=dsec6.hints.gff --allow_hinted_splicesites=atac  dsec-all-chromosome-r1.0.fasta > dsec6.augusuts.out
+--hintsfile=sample.hints.gff --allow_hinted_splicesites=atac  sp-all-chromosome-r1.0.fasta > sample.augusuts.out
 
