@@ -113,36 +113,12 @@ for (t in time){
 ###################
 ### GO analysis ###
 ###################
-FBids<-as.character(pTable.mel.Par.5$FBgn_mel)
-eids<-select(org.Dm.eg.db, FBids, "ENTREZID", "FLYBASE")[2]
-go<-goana(eids,species="Dm")
-topGO(go,n=50)
-go<-kegga(eids,species="Dm")
+#FBids<-as.character(pTable.mel.Par.5$FBgn_mel)
+#eids<-select(org.Dm.eg.db, FBids, "ENTREZID", "FLYBASE")[2]
+#go<-goana(eids,species="Dm")
+#topGO(go,n=50)
+#go<-kegga(eids,species="Dm")
 
-show.DEgenes<-function(FBid=NULL, tdata=NULL, cov=NULL, cg=NULL, q=NULL){#tdata=sp.dge.keep$counts,cov=sp.targets, q=NULL){ 
-    gene<-which(rownames(tdata)==FBid) 
-    y<-as.numeric(tdata[gene,])
-    y<-log2(y+1) #for log2 count data
-    interaction.plot(cov$line,cov$treatment,y,
-    ylim=c(min(y),max(y)),
-    ylab="Log2(Counts Per Million)",
-    xlab="Line",
-    legend=FALSE,
-    col=c("blue","red"))
-    points(rep(1:4, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")
-    points(rep(1:4, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue")
-    abline(v=2.5, lty=2, col="grey")
-    title(main=paste(cg,"(", FBid, ")", sep=" "), sub=paste("FDR=", signif(q , digits=4)))
-}
-
-pdf("figures/CPMplots_melPar_50h.pdf", paper="a4", height=10)
-par(mfrow=c(4,3))
-for (j in pTable.mel.Par.50[order(pTable.mel.Par.50$FDR),]$FBgn){
- show.DEgenes(j,cpm.50,targets.50,
- pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$CG,
- pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$FDR)
- }
-dev.off()
 
 
 		#mel.lrt.tagwise<-glmLRT(mel.fit.tagwise, contrast=mel.contrasts[,i])

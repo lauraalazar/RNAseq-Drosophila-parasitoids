@@ -79,23 +79,6 @@ sp.counts.50<-cbind(melC1.50[mC1.50,],sec.50[msec.50,],sim.50[msim.50,],yak.50[m
 sp.counts.5<-sp.counts.5[,as.character(targets[which(targets$line%in%species & targets$time==5),]$sample)] 
 sp.counts.50<-sp.counts.50[,as.character(targets[which(targets$line%in%species & targets$time==50),]$sample)]
 
-## collate all info
-#sp.dge.5<-DGEList(counts=sp.counts.5, group=paste(sp.targets.5$line, sp.targets.5$treatment, sep="."), genes=rownames(sp.counts.5))
-#sp.dge.50<-DGEList(counts=sp.counts.50, group=paste(sp.targets.50$line, sp.targets.50$treatment, sep="."), genes=rownames(sp.counts.50))
-
-#filter out very low counts
-#keep.5<-rowSums(cpm(sp.dge.5)>5) >= 3
-#keep.50<-rowSums(cpm(sp.dge.50)>5) >= 3
-
-#sp.dge.keep.5<-sp.dge.5[keep.5,]
-#sp.dge.keep.5$samples$lib.size <- colSums(sp.dge.keep.5$counts) 
-
-#sp.dge.keep.50<-sp.dge.50[keep.50,]
-#sp.dge.keep.50$samples$lib.size <- colSums(sp.dge.keep.50$counts) 
-
-# normalize using TTM
-#sp.dge.keep.5<-calcNormFactors(sp.dge.keep.5)
-#sp.dge.keep.50<-calcNormFactors(sp.dge.keep.50)
 ############################################################################
 # start statistical analysis of differential expression
 #using contrasts to compare differences in expression for all species
@@ -113,11 +96,20 @@ for (t in time){
 		sp.design<-model.matrix(~0+sp.group+Batch,data=sp.targets)
 		colnames(sp.design)<-c("mel.ctl", "mel.par", "sec.ctl", "sec.par", 
 			"sim.ctl", "sim.par", "yak.ctl", "yak.par","Batch2", "Batch3")
-		sp.contrasts<-makeContrasts(Par=(mel.par+sec.par+sim.par+yak.par)/4-(mel.ctl+sec.ctl+sim.ctl+yak.ctl)/4, 
-			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), 
-			YakxPar=(yak.par-yak.ctl), ResSp=(mel.par+sim.par+yak.par)/3-(mel.ctl+sim.ctl+yak.ctl)/3,
+		sp.contrasts<-makeContrasts(Par=(mel.par+sec.par+sim.par+yak.par)/4-(mel.ctl+sec.ctl+sim.ctl+yak.ctl)/4, #all species
+			#Clade specific (all possible combinations)
+			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), YakxPar=(yak.par-yak.ctl), 
 			MelSimxPar=(mel.par+sim.par)/2-(mel.ctl+sim.ctl)/2,
+			MelSecxPar=(mel.par+sec.par)/2-(mel.ctl+sec.ctl)/2,
+			MelYakxPar=(mel.par+yak.par)/2-(mel.ctl+yak.ctl)/2,
+			SecSimxPar=(sec.par+sim.par)/2-(sec.ctl+sim.ctl)/2,	
+			SecYacxPar=(sec.par+yak.par)/2-(sec.ctl+yak.ctl)/2,
+			SimYakxPar=(yak.par+sim.par)/2-(yak.ctl+sim.ctl)/2,
 			MelSimSecxPar=(mel.par+sec.par+sim.par)/3-(mel.ctl+sec.ctl+sim.ctl)/3,
+			SimSecYakxPar=(sim.par+sec.par+yak.par)/3-(sim.ctl+sec.ctl+yak.ctl)/3,
+			MelSecYakxPar=(mel.par+sec.par+yak.par)/3-(mel.ctl+sec.ctl+yak.ctl)/3,
+			#Resistant species
+			MelSimYakxPar=(mel.par+sim.par+yak.par)/3-(mel.ctl+sim.ctl+yak.ctl)/3,
 			levels=sp.design)
 	}else if (t==50){
 		#exclude yakuba for 50 because its biological replicates are to high and one is missing
@@ -129,28 +121,21 @@ for (t in time){
 		colnames(sp.design)<-c("mel.ctl", "mel.par", "sec.ctl", "sec.par", 
 			"sim.ctl", "sim.par", "yak.ctl", "yak.par","Batch2", "Batch3")
 		sp.contrasts<-makeContrasts(Par=(mel.par+sec.par+sim.par+yak.par)/4-(mel.ctl+sec.ctl+sim.ctl+yak.ctl)/4, 
-			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), 
-			YakxPar=(yak.par-yak.ctl), ResSp=(mel.par+sim.par+yak.par)/3-(mel.ctl+sim.ctl+yak.ctl)/3,
+			#Clade specific (all possible combinations)
+			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), YakxPar=(yak.par-yak.ctl), 
 			MelSimxPar=(mel.par+sim.par)/2-(mel.ctl+sim.ctl)/2,
+			MelSecxPar=(mel.par+sec.par)/2-(mel.ctl+sec.ctl)/2,
+			MelYakxPar=(mel.par+yak.par)/2-(mel.ctl+yak.ctl)/2,
+			SecSimxPar=(sec.par+sim.par)/2-(sec.ctl+sim.ctl)/2,	
+			SecYacxPar=(sec.par+yak.par)/2-(sec.ctl+yak.ctl)/2,
+			SimYakxPar=(yak.par+sim.par)/2-(yak.ctl+sim.ctl)/2,
 			MelSimSecxPar=(mel.par+sec.par+sim.par)/3-(mel.ctl+sec.ctl+sim.ctl)/3,
+			SimSecYakxPar=(sim.par+sec.par+yak.par)/3-(sim.ctl+sec.ctl+yak.ctl)/3,
+			MelSecYakxPar=(mel.par+sec.par+yak.par)/3-(mel.ctl+sec.ctl+yak.ctl)/3,
+			#Resistant species
+			MelSimYakxPar=(mel.par+sim.par+yak.par)/3-(mel.ctl+sim.ctl+yak.ctl)/3,
 			levels=sp.design)
-		#colnames(sp.design)<-c("mel.ctl", "mel.par", "sec.ctl", "sec.par", 
-		#	"sim.ctl", "sim.par", "Batch2", "Batch3")
-		#sp.contrasts<-makeContrasts(Par=(mel.par+sec.par+sim.par)/3-(mel.ctl+sec.ctl+sim.ctl)/3, 
-		#	MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), 
-		#	MelSimxPar=(mel.par+sim.par)/2-(mel.ctl+sim.ctl)/2,
-		#	levels=sp.design)
-		
 	}
-	#m<-sp.targets[which(sp.targets$line=="melC1"),]$sample
-	#mel.mean<-apply(sp.counts.5[,which(colnames(sp.counts.5)%in%m)],1,function(x) mean(x))
-	#mel.sd<-apply(sp.counts.5[,which(colnames(sp.counts.5)%in%m)],1,function(x) sd(x))
-	#se<-sp.targets[which(sp.targets$line=="sec"),]$sample
-	#sec.sd<-apply(sp.counts.5[,which(colnames(sp.counts.5)%in%se)],1,function(x) sd(x))
-	#si<-sp.targets[which(sp.targets$line=="sim"),]$sample
-	#sim.sd<-apply(sp.counts.5[,which(colnames(sp.counts.5)%in%si)],1,function(x) sd(x))
-	#y<-sp.targets[which(sp.targets$line=="yak"),]$sample
-	#yak.sd<-apply(sp.counts.5[,which(colnames(sp.counts.5)%in%y)],1,function(x) sd(x))
 
 	## collate all info
 	sp.dge<-DGEList(counts=sp.counts, group=sp.group, genes=rownames(sp.counts))
@@ -164,20 +149,6 @@ for (t in time){
 	sp.dge.keep<-calcNormFactors(sp.dge.keep)
 	assign(paste("sp.dge",t,sep="."),sp.dge.keep)
 
-	# sp.targets$group<-sp.group
-	# points <- c(15,16,17,20)
-	# colors <- rep(c("blue", "darkgreen", "red", "yellow"), 2)
-	# color <- c("blue","yellow")
-	# plotMDS(sp.dge.keep, col=colors[sp.targets$line], pch=points[sp.targets$line],main= "MDS all species 50h",
-	# labels=sp.targets$sample,main= "MDS all species 50h")
-	# plotMDS(sp.dge.keep, col=colors[sp.targets$line], pch=points[sp.targets$line],
-	# labels=sp.targets$sample,main= "MDS all species 5h") 
-	# plot this with other D. mel lines to check for dpecificity of C1
-	# legend("topright", legend=levels(sp.targets$line),pch=points, col=colors, ncol=2)
-	# This indicates that the differences between groups are larger than those within groups
-	# Check outlier genes/samples: genes with highest mean and sd per sample
-	# One gene is an outlier for mel, sim sec: FBgn0264695. FBgn0032350 and FBgn0000639 for yak
-	# finding the 10 or so genes with the lowest dispersions and look at their counts to see if there is anything 		# amiss dge$tagwise.dispersions
 
 	#Estimate dispersion
 
@@ -190,18 +161,6 @@ for (t in time){
 	sp.FDR <- p.adjust(sp.qlf$table$PValue, method="BH")
 	sp.qlf[which(sp.FDR<0.1),]
 
-	#get the distribution of the dispersion: hist(sp.disp$tagwise.dispersion)
-	#it shows that most are between 0-1 and few above 2
-	#genes.filtered<-c("FBgn0027527","FBgn0000559","FBgn0264695")
-	#genes.filtered<-names(sim.sd[sim.sd>10000])
-	#sp.counts.filtered<-sp.counts[-which(rownames(sp.counts)%in%genes.filtered),]
-	#sp.dge<-DGEList(counts=sp.counts.filtered, group=sp.group, genes=rownames(sp.counts.filtered))
-	#sp.Dglm<-estimateGLMCommonDisp(sp.dge.keep,sp.design, verbose=T)
-	#sp.Dglm.trended<-estimateGLMTrendedDisp(sp.Dglm, sp.design, verbose=T)
-	#sp.Dglm.tagwise<-estimateGLMTagwiseDisp(sp.Dglm.trended, sp.design, prior.df=15) #,prior.df=20
-	#sp.fit.trended <- glmFit(sp.Dglm.trended,sp.design)
-	#sp.fit.tagwise <- glmFit(sp.Dglm.tagwise,sp.design)
-	#sp.lrt <- glmLRT(sp.fit.tagwise,contrast=sp.contrasts)
 
 	for (i in colnames(sp.contrasts)){
 		sp.qlf <- glmQLFTest(sp.fit, contrast=sp.contrasts[,i])	
@@ -221,50 +180,20 @@ for (t in time){
 }
 
 
-#Get FBid and CG conversion
-#m<-match(rownames(sp.counts.5),orthologs$V1)
-#FBgn_CG<-data.frame(FBgn=orthologs[m,]$V1,CG=orthologs[m,]$V2)
+#Combine all clade specific contrasts in one table with unique ID and FC and FDR from the 1st contrast
+pTable.sp.Clade.5 <- as.data.frame(setNames(replicate(4,numeric(0), simplify = F), 
+			c("FBgn_mel","CG","logFC","FDR")))
+pTable.sp.Clade.50 <- as.data.frame(setNames(replicate(4,numeric(0), simplify = F), 
+			c("FBgn_mel","CG","logFC","FDR")))
 
-#plot CPM 
-# Edit plots to include both IDs
-show.DEgenes<-function(FBid=NULL, tdata=NULL, cov=NULL, cg=NULL, q=NULL){#tdata=sp.dge.keep$counts,cov=sp.targets, q=NULL){ 
-    gene<-which(rownames(tdata)==FBid) 
-    y<-as.numeric(tdata[gene,])
-    y<-log2(y+1) #for log2 count data
-    interaction.plot(cov$line,cov$treatment,y,
-    ylim=c(min(y),max(y)),
-    ylab="Log2(Counts Per Million)",
-    xlab="Line",
-    legend=FALSE,
-    col=c("blue","red"))
-    points(rep(1:4, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")
-    points(rep(1:4, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue")
-    title(main=paste(cg,"(", FBid, ")", sep=" "), sub=paste("FDR=", signif(q , digits=4)))
+for (i in colnames(sp.contrasts)){
+	ptable.5<-(paste("pTable.sp",i,5,sep="."))
+	ptable.50<-(paste("pTable.sp",i,50,sep="."))
+	if(i!="Par"){
+		pTable.sp.Clade.5<-rbind(pTable.sp.Clade.5,
+					get(ptable.5)[which(!(get(ptable.5)$FBgn_mel%in%pTable.sp.Clade.5$FBgn_mel)),])
+		pTable.sp.Clade.50<-rbind(pTable.sp.Clade.50,
+					get(ptable.50)[which(!(get(ptable.50)$FBgn_mel%in%pTable.sp.Clade.5$FBgn_mel)),])
+	}
 }
-
-#Combine all contrasts in one table
-pTable.spp.5<-pTable.sp.Par.5
-pTable.spp.5<-rbind(pTable.spp.5,
-		pTable.sp.ResSp.5[-which(pTable.sp.ResSp.5$FBgn_mel%in%pTable.spp.5$FBgn_mel),])
-pTable.spp.5<-rbind(pTable.spp.5,
-		pTable.sp.MelSimSecxPar.5[-which(pTable.sp.MelSimSecxPar.5$FBgn_mel%in%pTable.spp.5$FBgn_mel),])
-pTable.spp.5<-rbind(pTable.spp.5,
-		pTable.sp.MelSimxPar.5[-which(pTable.sp.MelSimxPar.5$FBgn_mel%in%pTable.spp.5$FBgn_mel),])
-
-
-
-pdf("figures/CPMplots_sppPar_5h.pdf", paper="a4", height=10)
-par(mfrow=c(4,3))
-for (j in pTable.spp.5[order(pTable.spp.5$FDR),]$FBgn){
- show.DEgenes(j,cpm.5,targets.5,
- pTable.spp.5[which(pTable.spp.5$FBgn_mel==j),]$CG,
- pTable.spp.5[which(pTable.spp.5$FBgn_mel==j),]$FDR)
- }
-dev.off()
-
-
-
-
-#https://stat.ethz.ch/pipermail/bioconductor/2014-April/058822.html
-#https://support.bioconductor.org/p/69374/
 

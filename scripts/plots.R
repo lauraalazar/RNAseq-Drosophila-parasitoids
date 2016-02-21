@@ -1,3 +1,6 @@
+source('/home/laura/PhDpapers/RNAseq/scripts/script_Dmel.edgeR.R')
+source('/home/laura/PhDpapers/RNAseq/scripts/script_Dspp_all_annotationflybase.edgeR.R')
+
 
 ########### MDS plots #############
 ## Spp 5 hours
@@ -58,7 +61,168 @@ dev.off()
 
 
 ########### CPM plots #############
+#### Species-specific
+show.DEgenes.sp_specific<-function(species=sp,time=t){ 
+	sp=substr(species,0,3)
+	tdata=get(paste(sp,"cpm",time,sep="."))
+	pTable=get(paste("pTable",sp,time,sep="."))
+	cov=get(paste(sp,"targets",time,sep="."))
+	o<-match(pTable[rev(order(pTable$logFC)),]$FB,rownames(tdata))
+	DF.ctl <- tdata[o,as.character(cov[which(cov$treatment=="ctl"),]$sample)]
+	DF.par <- tdata[o,as.character(cov[which(cov$treatment=="par"),]$sample)]
+	mean.ctl<-apply(DF.ctl,1,mean)
+	mean.par<-apply(DF.par,1,mean)
+	min.ctl<-apply(DF.ctl,1,min)
+	min.par<-apply(DF.par,1,min)
+	max.ctl<-apply(DF.ctl,1,max)
+	max.par<-apply(DF.par,1,max)
+	plot(1:nrow(DF.ctl), log2(mean.ctl + 1),
+	type="p", pch=17, col="blue", lty=3, ylim=c(0,log2(max(tdata))),
+	ylab="Log2(Counts Per Million)",
+     	xlab="",
+     	xaxt="n",
+     	main=paste("D",species,sep="."))
+	points(1:nrow(DF.par), log2(mean.par),
+     	type="p", pch=19, col="red", lty=3)
+	len = .07
+	for (i in 1:nrow(DF.ctl)) {
+     		arrows(i, log2(mean.ctl[i]+1),
+            		i, log2(max.ctl[i]+1)+0.1,
+            		angle=90, length=len, col="blue")
+     		arrows(i, log2(mean.ctl[i]+1),
+            		i, log2(min.ctl[i]+1)-0.1,
+            		angle=90, length=len, col="blue")
+     		arrows(i, log2(mean.par[i]+1),
+            		i, log2(max.par[i]+1)+0.1,
+            		angle=90, length=len, col="red")
+	     	arrows(i, log2(mean.par[i]+1),
+            		i, log2(min.par[i]+1)-0.1,
+		        angle=90, length=len, col="red")
+}
+text(seq(1,nrow(DF.ctl)), par("usr")[3]-0.25,
+	srt = 60, adj= 1, xpd = TRUE,
+	labels = paste(rownames(DF.par)), cex=0.75)
+}
 
+pdf("figures/CPMplots_spspecific_5h.pdf", paper="a4")
+par(mfrow=c(3,1), mar=c(5, 4, 4, 0.5))
+show.DEgenes.sp_specific(species="simulans",time=5)
+show.DEgenes.sp_specific(species="sechellia",time=5)
+show.DEgenes.sp_specific(species="yakuba",time=5)
+dev.off()
+
+pdf("figures/CPMplots_spspecific_50h.pdf", paper="a4")
+par(mfrow=c(3,1), mar=c(5, 4, 4, 0.5))
+show.DEgenes.sp_specific(species="simulans",time=50)
+show.DEgenes.sp_specific(species="sechellia",time=50)
+#show.DEgenes.sp_specific(species="yakuba",time=50)
+dev.off()
+
+### All species + Dmel
+show.DEgenes<-function(FBid=NULL, tdata=NULL, cov=NULL, cg=NULL, q=NULL){#tdata=sp.dge.keep$counts,cov=sp.targets, q=NULL){ 
+    gene<-which(rownames(tdata)==FBid) 
+    y<-as.numeric(tdata[gene,])
+    y<-log2(y+1) #for log2 count data
+    interaction.plot(cov$line,cov$treatment,y,
+    ylim=c(min(y),max(y)),
+    ylab="Log2(Counts Per Million)",
+    xlab="Line",
+    legend=FALSE,
+    col=c("blue","red"))
+    points(rep(1:4, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")
+    points(rep(1:4, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue")
+    abline(v=2.5, lty=2, col="grey")
+    title(main=paste(cg,"(", FBid, ")", sep=" "), sub=paste("FDR=", signif(q , digits=4)))
+}
+
+pdf("figures/CPMplots_melPar_5h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in pTable.mel.Par.5[order(pTable.mel.Par.5$FDR),]$FBgn){
+ show.DEgenes(j,mel.cpm.5,mel.targets.5,
+ pTable.mel.Par.5[which(pTable.mel.Par.5$FBgn_mel==j),]$CG,
+ pTable.mel.Par.5[which(pTable.mel.Par.5$FBgn_mel==j),]$FDR)
+ }
+dev.off()
+
+
+pdf("figures/CPMplots_melPar_50h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in pTable.mel.Par.50[order(pTable.mel.Par.50$FDR),]$FBgn){
+ show.DEgenes(j,mel.cpm.50,mel.targets.50,
+ pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$CG,
+ pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$FDR)
+ }
+dev.off()
+
+######## Adhoc Analyses #########
+
+### D. mel CPM of CvsS in Wertheim
+CvsS_wertheim<-read.table("other_studies/DE_66h_FBid_symbol.csv",header=T)
+ 
+pdf("figures/CPMplots_adhocCvsS_50h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in CvsS_wertheim$FBID_KEY){
+ show.DEgenes(j,mel.cpm.50,mel.targets.50,
+ CvsS_wertheim[which(CvsS_wertheim$FBID_KEY==j),]$ANNOTATION_SYMBOL,
+ 1.000) }
+dev.off()
+
+pdf("figures/CPMplots_adhocCvsS_5h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in CvsS_wertheim$FBID_KEY){
+ show.DEgenes(j,mel.cpm.5,mel.targets.5,
+ CvsS_wertheim[which(CvsS_wertheim$FBID_KEY==j),]$ANNOTATION_SYMBOL,
+ 1.000) }
+dev.off()
+
+### D. yakuba CPM of D.mel DE
+
+FBgn_mel_only.5 <-as.character(
+		pTable.mel.Par.5[-which(pTable.mel.Par.5$FBgn_mel%in%
+		pTable.sp.Par.5$FBgn_mel),]$FBgn)
+
+FBgn_mel_sp.5 <-as.character(
+		FBgn_mel_only.5[which(FBgn_mel_only.5%in%
+		rownames(sp.cpm.5))])
+
+FBgn_mel_only.50 <-as.character(
+		pTable.mel.Par.50$FBgn_mel)
+#		pTable.mel.Par.50[-which(pTable.mel.Par.50$FBgn_mel%in%
+#		pTable.sp.Par.50$FBgn_mel),]$FBgn)
+
+
+FBgn_mel_sp.50 <-as.character(
+		FBgn_mel_only.50[which(FBgn_mel_only.50%in%
+		rownames(sp.cpm.5))])
+
+pdf("figures/CPMplots_adhocYakMel5h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in FBgn_mel_sp.5){
+ show.DEgenes(j,sp.cpm.5,sp.targets.5,
+ pTable.mel.Par.5[which(pTable.mel.Par.5$FBgn_mel==j),]$CG,
+ 1.000) }
+dev.off()
+
+pdf("figures/CPMplots_adhocYakMel50h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in FBgn_mel_sp.50){
+ show.DEgenes(j,sp.cpm.50,sp.targets.50,
+ pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$CG,
+ 1.000) }
+dev.off()
+
+
+pdf("figures/CPMplots_melPar_50h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in pTable.mel.Par.50[order(pTable.mel.Par.50$FDR),]$FBgn){
+ show.DEgenes(j,mel.cpm.50,mel.targets.50,
+ pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$CG,
+ pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$FDR)
+ }
+dev.off()
+
+
+### CHECK OR DELETE THIS FUNCTION ######
 show.DEgenes<-function(FBid=NULL,group=NULL,time=NULL,model=NULL){ #, time=NULL, sp=NULL,,q=NULL
     tdata=get(paste(group,"dge.keep",time,sep="."))$counts
     cov=get(paste(group,"targets",sep="."))
@@ -110,7 +274,7 @@ for(i in detags.tagwise.50.CSxTrt[order(pTable.tagwise.50.CSxTrt$FDR)]){
 dev.off()
 
 
-#########SPP###########
+#########SPP########### CHECK THIS FUNCTION
 #plot CPM for spp
 # Edit plots to include both IDs
 show.DEgenes<-function(FBid=NULL, tdata=sp.dge.keep.50$counts,cov=sp.cov.50, q=NULL){ 
@@ -141,17 +305,22 @@ dev.off()
 ### Spp
 library(gplots)
 matrix.sp.5<-sp.cpm.5[which(rownames(sp.cpm.5)%in%
-pTable.spp.5$FBgn_mel),]
+pTable.sp.Clade.5$FBgn_mel),]
 
 #replace FB for CG and sample names
-m<-match(rownames(matrix.sp.5),pTable.spp.5$FBgn)
+m<-match(rownames(matrix.sp.5),pTable.sp.Clade.5$FBgn)
 s<-match(colnames(matrix.sp.5),sp.targets.5$sample)
-rownames(matrix.sp.5)<-pTable.spp.5[m,]$CG
+rownames(matrix.sp.5)<-pTable.sp.Clade.5[m,]$CG
 colnames(matrix.sp.5)<-
 paste(sp.targets.5[s,]$line,sp.targets.5[s,]$treatment,sep=".")
-logcpm <- cpm(y, prior.count=2, log=TRUE)
+#logcpm <- cpm(y, prior.count=2, log=TRUE)
+d <- dist(matrix.sp.5, method = "euclidean")
+hr<-hclust(d, method="ward.D2")
+hc<-hclust(as.dist(1-cor(t(as.matrix(matrix.sp.5)), method = "pearson")))#,method="ward.D2" )
+## CHECK CLUSTERING ALGORITHMS ####
 heatmap.2(log(matrix.sp.5+1),col=topo.colors(75), 
 	  scale="none",key=TRUE, symkey=FALSE, 
+	  Rowv = as.dendrogram(hr), Colv = as.dendrogram(hc),
 	  density.info="none", trace="none")
 
 ### Mel
@@ -169,7 +338,7 @@ heatmap.2(log(matrix.mel.5+1),col=topo.colors(75),
 	  scale="none",key=TRUE, symkey=FALSE, 
 	  density.info="none", trace="none")
 
-#05 hours
+#50 hours
 matrix.mel.50<-mel.cpm.50[which(rownames(mel.cpm.50)%in%
 pTable.mel.Par.50$FBgn_mel),]
 
@@ -181,3 +350,109 @@ paste(mel.targets.50[s,]$line,mel.targets.50[s,]$treatment,sep=".")
 heatmap.2(log(matrix.mel.50+1),col=topo.colors(75), 
 	  scale="none",key=TRUE, symkey=FALSE, 
 	  density.info="none", trace="none")
+
+### All spp and time points
+#Take a list of all significant FBgn that have an ortholog in mel 
+#(does it make sense to also include those that do not have orthologs in Dmel?)
+allFB<-c(as.character(pTable.sp.Par.5$FBgn_mel),as.character(pTable.sp.Clade.5$FBgn_mel),
+	 as.character(pTable.mel.Par.5$FBgn_mel),as.character(pTable.mel.Par.50$FBgn_mel),
+	 as.character(pTable.sim.5$FB_mel),as.character(pTable.sim.50$FB_mel),
+	 as.character(pTable.sec.5$FB_mel),as.character(pTable.sec.50$FB_mel),
+	 as.character(pTable.yak.5$FB_mel))
+
+# Filter duplicates
+FB<-unique(allFB[which(!is.na(allFB))])
+
+targets$line.time<-as.factor(paste(targets$line,targets$time,sep="."))
+cols = levels(targets$line.time)
+
+# Initiate a matrix with FB as rows and line.time as columns
+FoldChange<-matrix(ncol = length(cols), nrow = length(FB))
+colnames(FoldChange)<-cols
+rownames(FoldChange)<-FB
+
+#Fill the matrix with the cpm value from spp_specific normalization 
+#(I think it is better than all species normalization is)
+#Since sp-specific cpm are in each species annotation, this needs to be matched to
+#the melanogaster FB
+for (i in rownames(FoldChange)) {
+	for (j in colnames(FoldChange)){
+		samples_ctl <- targets[which(targets$line.time==j & 	
+				targets$treatment=="ctl"),]$sample
+		samples_par <- targets[which(targets$line.time==j & 	
+				targets$treatment=="par"),]$sample
+		sp <- unlist(strsplit(j,"[.]"))[1]
+		time<-unlist(strsplit(j,"[.]"))[2]
+		i_sp = 'NA'
+		if (length(grep("mel",j))!=0){
+			cpm <- get(paste("mel.cpm",time,sep="."))
+			cpm_ctl <- as.numeric(cpm[i,as.character(samples_ctl)])
+			cpm_par <- as.numeric(cpm[i,as.character(samples_par)])
+			median_ctl <- median(cpm_ctl)
+			median_par <- median(cpm_par)
+			FoldChange[i,j] <- as.numeric(log2((median_par+0.001)/(median_ctl+0.001)))
+			} else if(length(grep("mel",j))==0){ 
+				x<-which(i==orthologs$V1)
+				ortho_subset<-orthologs[x, ]
+				cpm <- get(paste(sp,"cpm",time,sep="."))
+				# redefine i with the sp-specific FB. 
+				# Some genes have 2 IDs in mel, I'm taking only the first value (?)
+				i_sp <-as.character(ortho_subset[grep(sp,orthologs[x, ]$V7),]$V6)[1]
+				if (length(which(rownames(cpm)==i_sp))!=0){
+					cpm_ctl <- as.numeric(cpm[i_sp,as.character(samples_ctl)])
+					cpm_par <- as.numeric(cpm[i_sp,as.character(samples_par)])
+					median_ctl <- median(cpm_ctl)
+					median_par <- median(cpm_par)
+					#avoid dividing by 0 -> this can have big effect in the magnitud of FC 
+					FoldChange[i,j] <- as.numeric(log2((median_par+0.001)/(median_ctl+0.001)))
+					}	 
+				}
+		}
+}
+
+
+FoldChange[which(is.na(FoldChange))]<-0
+#d <- dist(FoldChange, method = "euclidean")
+#hr<-hclust(d, method="ward.D2")
+#hc<-hclust(as.dist(1-cor(t(as.matrix(FoldChange)), method = "pearson")),method="ward.D2" )
+#rowv<- as.dendrogram(hr)
+#colv<- as.dendrogram(hclust(as.dist(1-cor(FoldChange))))
+
+library(vegan)
+#a.dist <- vegdist(a, method = "bray")
+#row.clus <- hclust(a.dist, "aver")
+
+sp.dist<-as.dist(1-cor(FoldChange))
+
+#Define clusters
+hr<-hclust(sp.dist, method="ward.D2")
+gene.dist <- as.dist(1-cor(t(FoldChange)))
+hc <- hclust(gene.dist, method="ward.D2")
+
+fc<-rownames(FoldChange)
+for(r in c(1:length(fc))){
+	if(!is.na(as.character(orthologs[orthologs$V1==fc[r],]$V2[1]))){
+		fc[r]<-as.character(orthologs[orthologs$V1==fc[r],]$V2[1])
+	}
+}
+
+rownames(FoldChange)<-fc
+
+sp.order<-c("melC1.5","melC2.5","melS1.5","melS2.5","sim.5","sec.5","yak.5",
+"melC1.50","melC2.50","melS1.50","melS2.50","sim.50","sec.50","yak.50")
+
+library("Heatplus")
+library(RColorBrewer)
+
+pdf("figures/HeatmapFC_allspp_times.pdf")
+plot(annHeatmap2(FoldChange[,sp.order],
+	col = colorRampPalette(c("black","darkblue", "blue", "gold","yellow", "lightgoldenrodyellow"), space = "rgb")(20),
+	breaks = -10:10,
+	scale= "none", 
+	dendrogram = list(Row = list(dendro = as.dendrogram(hc)), Col = list(status="no")), #list(dendro = as.dendrogram(hr))),
+	legend = 3, #3
+	labels = list(Row = list(ncol = 10, cex=0.35), Col = list(cex=0.7)),
+	#ann = list(Row = list(data =ann.dat), Col = NULL), #list(data=resistance))
+	cluster = list(Row = list(cuth = 3.6), col = brewer.pal(4, "Set2")) # cuth gives the height at which the dendrogram should be cut to form clusters, and col specifies the colours for the clusters
+	), widths=c(1.5,4,1), heights=c(0.8,6,1))
+dev.off()
