@@ -131,11 +131,20 @@ show.DEgenes<-function(FBid=NULL, tdata=NULL, cov=NULL, cg=NULL, q=NULL){#tdata=
     col=c("blue","red"))
     points(rep(1:4, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")
     points(rep(1:4, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue")
+    #label the replicates
+    text(rep(1:4,1),y[cov$treatment=="par" & cov$Batch==1]+0.1,"b1")
+    text(rep(1:4,1),y[cov$treatment=="par" & cov$Batch==2]+0.1,"b2")
+    text(rep(1:4,1),y[cov$treatment=="par" & cov$Batch==3]+0.1,"b3")
+    text(rep(1:4,1),y[cov$treatment=="ctl" & cov$Batch==3]+0.1,"b3")
+    text(rep(1:4,1),y[cov$treatment=="ctl" & cov$Batch==2]+0.1,"b2")
+    text(rep(1:4,1),y[cov$treatment=="ctl" & cov$Batch==1]+0.1,"b1")
+    text(rep(1:4,1),y[cov$treatment=="ctl" & cov$Batch==1]+0.1,"b1")
+
     abline(v=2.5, lty=2, col="grey")
     title(main=paste(cg,"(", FBid, ")", sep=" "), sub=paste("FDR=", signif(q , digits=4)))
 }
 
-pdf("figures/CPMplots_melPar_5h.pdf", paper="a4", height=10)
+pdf("figures/CPMplots_melPar_5h_batch.pdf", paper="a4", height=10)
 par(mfrow=c(4,3))
 for (j in pTable.mel.Par.5[order(pTable.mel.Par.5$FDR),]$FBgn){
  show.DEgenes(j,mel.cpm.5,mel.targets.5,
@@ -145,7 +154,7 @@ for (j in pTable.mel.Par.5[order(pTable.mel.Par.5$FDR),]$FBgn){
 dev.off()
 
 
-pdf("figures/CPMplots_melPar_50h.pdf", paper="a4", height=10)
+pdf("figures/CPMplots_melPar_50h_batch.pdf", paper="a4", height=10)
 par(mfrow=c(4,3))
 for (j in pTable.mel.Par.50[order(pTable.mel.Par.50$FDR),]$FBgn){
  show.DEgenes(j,mel.cpm.50,mel.targets.50,
@@ -316,6 +325,7 @@ paste(sp.targets.5[s,]$line,sp.targets.5[s,]$treatment,sep=".")
 #logcpm <- cpm(y, prior.count=2, log=TRUE)
 d <- dist(matrix.sp.5, method = "euclidean")
 hr<-hclust(d, method="ward.D2")
+#Ward's minimum variance criterion minimizes the total within-cluster variance. To implement this method, at each step find the pair of clusters that leads to minimum increase in total within-cluster variance after merging. This increase is a weighted squared distance between cluster centers. At the initial step, all clusters are singletons 
 hc<-hclust(as.dist(1-cor(t(as.matrix(matrix.sp.5)), method = "pearson")))#,method="ward.D2" )
 ## CHECK CLUSTERING ALGORITHMS ####
 heatmap.2(log(matrix.sp.5+1),col=topo.colors(75), 
