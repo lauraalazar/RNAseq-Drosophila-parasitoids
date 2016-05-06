@@ -1,4 +1,4 @@
-rm(list = ls())
+#rm(list = ls())
 
 library(edgeR)
 
@@ -102,40 +102,21 @@ for (t in time){
 			#Clade specific (all possible combinations)
 			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), YakxPar=(yak.par-yak.ctl), 
 			MelSimxPar=(mel.par+sim.par)/2-(mel.ctl+sim.ctl)/2,
-			MelSecxPar=(mel.par+sec.par)/2-(mel.ctl+sec.ctl)/2,
-			MelYakxPar=(mel.par+yak.par)/2-(mel.ctl+yak.ctl)/2,
-			SecSimxPar=(sec.par+sim.par)/2-(sec.ctl+sim.ctl)/2,	
-			SecYacxPar=(sec.par+yak.par)/2-(sec.ctl+yak.ctl)/2,
-			SimYakxPar=(yak.par+sim.par)/2-(yak.ctl+sim.ctl)/2,
 			MelSimSecxPar=(mel.par+sec.par+sim.par)/3-(mel.ctl+sec.ctl+sim.ctl)/3,
-			SimSecYakxPar=(sim.par+sec.par+yak.par)/3-(sim.ctl+sec.ctl+yak.ctl)/3,
-			MelSecYakxPar=(mel.par+sec.par+yak.par)/3-(mel.ctl+sec.ctl+yak.ctl)/3,
-			#Resistant species
 			MelSimYakxPar=(mel.par+sim.par+yak.par)/3-(mel.ctl+sim.ctl+yak.ctl)/3,
 			levels=sp.design)
 	}else if (t==50){
-		#exclude yakuba for 50 because its biological replicates are to high and one is missing
 		sp.targets$Batch <- factor(c(rep(1:3,7),c(1,3)))
-		#sp.targets<-sp.targets[-which(sp.targets$line%in%"yak"),]
+		#yakuba gets excluded in the contrast "MelSimSecxPar"
 		sp.counts<-sp.counts[,which(sp.targets$sample%in%colnames(sp.counts))]
 		sp.group<-paste(sp.targets$line, sp.targets$treatment, sep=".")
 		sp.design<-model.matrix(~0+sp.group+Batch,data=sp.targets)
 		colnames(sp.design)<-c("mel.ctl", "mel.par", "sec.ctl", "sec.par", 
 			"sim.ctl", "sim.par", "yak.ctl", "yak.par","Batch2", "Batch3")
 		sp.contrasts<-makeContrasts(Par=(mel.par+sec.par+sim.par+yak.par)/4-(mel.ctl+sec.ctl+sim.ctl+yak.ctl)/4, 
-			#Clade specific (all possible combinations)
 			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), YakxPar=(yak.par-yak.ctl), 
 			MelSimxPar=(mel.par+sim.par)/2-(mel.ctl+sim.ctl)/2,
-			MelSecxPar=(mel.par+sec.par)/2-(mel.ctl+sec.ctl)/2,
-			MelYakxPar=(mel.par+yak.par)/2-(mel.ctl+yak.ctl)/2,
-			SecSimxPar=(sec.par+sim.par)/2-(sec.ctl+sim.ctl)/2,	
-			SecYacxPar=(sec.par+yak.par)/2-(sec.ctl+yak.ctl)/2,
-			SimYakxPar=(yak.par+sim.par)/2-(yak.ctl+sim.ctl)/2,
 			MelSimSecxPar=(mel.par+sec.par+sim.par)/3-(mel.ctl+sec.ctl+sim.ctl)/3,
-			SimSecYakxPar=(sim.par+sec.par+yak.par)/3-(sim.ctl+sec.ctl+yak.ctl)/3,
-			MelSecYakxPar=(mel.par+sec.par+yak.par)/3-(mel.ctl+sec.ctl+yak.ctl)/3,
-			#Resistant species
-			MelSimYakxPar=(mel.par+sim.par+yak.par)/3-(mel.ctl+sim.ctl+yak.ctl)/3,
 			levels=sp.design)
 	}
 
@@ -162,12 +143,15 @@ for (t in time){
 	for (i in colnames(sp.contrasts)){
 		sp.lrt <- glmLRT(sp.fit, contrast=sp.contrasts[,i])	
 		sp.FDR <- p.adjust(sp.lrt$table$PValue, method="BH")
-		summary(sp.de <- decideTestsDGE(sp.lrt,adjust.method="BH", p=0.1))
+		summary(sp.de <- decideTestsDGE(sp.lrt,adjust.method="BH", p=0.05))
 		sp.detags <- rownames(sp.dge.keep)[as.logical(sp.de)]
+		svg(paste("figures/MA_sp",t,i,".svg",sep="_"))
+		plotSmear(sp.disp,de.tags=sp.detags,pch=16,cex=0.8)
+		dev.off()
 		sp.logFC<-sp.lrt$table$logFC[as.logical(sp.de)]
 		m<-match(sp.detags,orthologs$V1)
 		cg<-orthologs[m,]$V2
-		pTable<-data.frame(FBgn_mel=sp.dge.keep$genes[as.logical(sp.de),],
+		pTable<-data.frame(FB_mel=sp.dge.keep$genes[as.logical(sp.de),],
 			CG=cg,logFC=sp.logFC,FDR=sp.FDR[as.logical(sp.de)])
 		# Keep only genes that have a minimum logFC of 2
 		pTable<-pTable[which(abs(pTable$logFC)>1),]
@@ -180,22 +164,31 @@ for (t in time){
 
 
 #Combine all clade specific contrasts in one table with unique ID and FC and FDR from the 1st contrast
+# MAKE a sp ALL that excludes spClade!!!!
 LRT.pTable.sp.Clade.5 <- as.data.frame(setNames(replicate(4,numeric(0), simplify = F), 
-			c("FBgn_mel","CG","logFC","FDR")))
+			c("FB_mel","CG","logFC","FDR")))
 LRT.pTable.sp.Clade.50 <- as.data.frame(setNames(replicate(4,numeric(0), simplify = F), 
-			c("FBgn_mel","CG","logFC","FDR")))
+			c("FB_mel","CG","logFC","FDR")))
 
 for (i in colnames(sp.contrasts)){
 	ptable.5<-(paste("LRT.pTable.sp",i,5,sep="."))
 	ptable.50<-(paste("LRT.pTable.sp",i,50,sep="."))
 	if(i!="Par"){
 		LRT.pTable.sp.Clade.5<-rbind(LRT.pTable.sp.Clade.5,
-					get(ptable.5)[which(!(get(ptable.5)$FBgn_mel%in%LRT.pTable.sp.Clade.5$FBgn_mel)),])
+					get(ptable.5)[which(!(get(ptable.5)$FB_mel%in%LRT.pTable.sp.Clade.5$FB_mel)),])
 		LRT.pTable.sp.Clade.50<-rbind(LRT.pTable.sp.Clade.50,
-					get(ptable.50)[which(!(get(ptable.50)$FBgn_mel%in%LRT.pTable.sp.Clade.50$FBgn_mel)),])
+					get(ptable.50)[which(!(get(ptable.50)$FB_mel%in%LRT.pTable.sp.Clade.50$FB_mel)),])
 	}
 }
 
+#Make a list with DEG from normalization with all and specie-specific normalization
+LRT.pTable.sp.All.5<-
+rbind(LRT.pTable.sp.Clade.5,
+LRT.pTable.sp.Par.5[!(LRT.pTable.sp.Par.5$FB_mel%in%LRT.pTable.sp.Clade.5$FB_mel),])
+
+LRT.pTable.sp.All.50<-
+rbind(LRT.pTable.sp.Clade.50,
+LRT.pTable.sp.Par.50[!(LRT.pTable.sp.Par.50$FB_mel%in%LRT.pTable.sp.Clade.50$FB_mel),])
 
 
 #########################################
@@ -257,7 +250,7 @@ for (t in time){
 		subgroup.logFC<-subgroup.qlf$table$logFC[as.logical(subgroup.de)]
 		m<-match(subgroup.detags,orthologs$V1)
 		cg<-orthologs[m,]$V2
-		pTable<-data.frame(FBgn_mel=subgroup.dge.keep$genes[as.logical(subgroup.de),],
+		pTable<-data.frame(FB_mel=subgroup.dge.keep$genes[as.logical(subgroup.de),],
 			CG=cg,logFC=subgroup.logFC,FDR=subgroup.FDR[as.logical(subgroup.de)])
 		pTable.i.t<-assign(paste("pTable.subgroup",combination,t,sep="."),pTable)
 	}

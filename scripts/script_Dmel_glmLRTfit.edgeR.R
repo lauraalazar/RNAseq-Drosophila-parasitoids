@@ -1,4 +1,4 @@
-rm(list = ls())
+#rm(list = ls())
 library(edgeR)
 library(GO.db)
 library(org.Dm.eg.db)
@@ -46,10 +46,10 @@ mel.counts.50<-cbind(melC1.50,melC2.50,melS1.50,melS2.50)
 
 mel.genes <-data.frame(FB=rownames(mel.counts.5))
 
-# Read flybase file to convert FBgn to CG
+# Read flybase file to convert FB to CG
 ID_converter<-read.table(paste(DIR.gff,"gene_orthologs_fb_2015_02.tsv",sep=""))
 m<-match(rownames(mel.counts.5),ID_converter$V1)
-FBgn_CG<-data.frame(FBgn=ID_converter[m,]$V1,CG=ID_converter[m,]$V2)
+FB_CG<-data.frame(FB=ID_converter[m,]$V1,CG=ID_converter[m,]$V2)
 
 
 for (t in time){
@@ -92,9 +92,12 @@ for (t in time){
 		#sp.lrt.tagwise<-glmLRT(sp.fit.tagwise, contrast=sp.contrasts[,i])
 		summary(mel.de <- decideTestsDGE(mel.lrt,adjust.method="BH", p=0.05))
 		mel.detags <- rownames(mel.dge.keep)[as.logical(mel.de)]
+		svg(paste("figures/MA_mel",t,i,".svg",sep="_"))
+		plotSmear(mel.disp,de.tags=mel.detags,pch=16,cex=0.8)
+		dev.off()
 		mel.logFC<-mel.lrt$table$logFC[as.logical(mel.de)]
-		cg=FBgn_CG[mel.dge.keep$genes[as.logical(mel.de),],]$CG
-		pTable<-data.frame(FBgn_mel=mel.dge.keep$genes[as.logical(mel.de),],
+		cg=FB_CG[mel.dge.keep$genes[as.logical(mel.de),],]$CG
+		pTable<-data.frame(FB_mel=mel.dge.keep$genes[as.logical(mel.de),],
 			CG=cg,logFC=mel.logFC,FDR=mel.FDR[as.logical(mel.de)])
 		pTable<-pTable[which(abs(pTable$logFC)>1),]
 		pTable.i.t<-assign(paste("LRT.pTable.mel",i,t,sep="."),pTable)
@@ -106,7 +109,7 @@ for (t in time){
 ###################
 ### GO analysis ###
 ###################
-#FBids<-as.character(pTable.mel.Par.5$FBgn_mel)
+#FBids<-as.character(pTable.mel.Par.5$FB_mel)
 #eids<-select(org.Dm.eg.db, FBids, "ENTREZID", "FLYBASE")[2]
 #go<-goana(eids,species="Dm")
 #topGO(go,n=50)
@@ -119,8 +122,8 @@ for (t in time){
 		#mel.detags.tagwise <- rownames(mel.dge.keep)[as.logical(mel.de.tagwise)]
 		#mel.FDR.tagwise<-p.adjust(mel.lrt.tagwise$table$PValue, method="BH")
 		#mel.logFC.tagwise<-mel.lrt.tagwise$table$logFC
-		#pTable<-data.frame(FBgn_mel=mel.dge.keep$genes[as.logical(mel.de.tagwise),],
-		#CG=FBgn_CG[mel.dge.keep$genes[as.logical(mel.de.tagwise),],]$CG,
+		#pTable<-data.frame(FB_mel=mel.dge.keep$genes[as.logical(mel.de.tagwise),],
+		#CG=FB_CG[mel.dge.keep$genes[as.logical(mel.de.tagwise),],]$CG,
 		#logFC=mel.logFC.tagwise[as.logical(mel.de.tagwise)],
 		#FDR=mel.FDR.tagwise[as.logical(mel.de.tagwise)])
 		#assign(paste("pTable.mel",i,t,sep="."),pTable)
