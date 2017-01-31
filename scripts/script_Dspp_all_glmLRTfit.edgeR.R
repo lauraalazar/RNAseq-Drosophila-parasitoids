@@ -107,14 +107,15 @@ for (t in time){
 			levels=sp.design)
 	}else if (t==50){
 		sp.targets$Batch <- factor(c(rep(1:3,7),c(1,3)))
-		#yakuba gets excluded in the contrast "MelSimSecxPar"
+		#exclude yak
+		sp.targets<-sp.targets[-which(sp.targets$line=="yak"),]
 		sp.counts<-sp.counts[,which(sp.targets$sample%in%colnames(sp.counts))]
 		sp.group<-paste(sp.targets$line, sp.targets$treatment, sep=".")
 		sp.design<-model.matrix(~0+sp.group+Batch,data=sp.targets)
 		colnames(sp.design)<-c("mel.ctl", "mel.par", "sec.ctl", "sec.par", 
-			"sim.ctl", "sim.par", "yak.ctl", "yak.par","Batch2", "Batch3")
-		sp.contrasts<-makeContrasts(Par=(mel.par+sec.par+sim.par+yak.par)/4-(mel.ctl+sec.ctl+sim.ctl+yak.ctl)/4, 
-			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), YakxPar=(yak.par-yak.ctl), 
+			"sim.ctl", "sim.par", "Batch2", "Batch3") #"yak.ctl", "yak.par",
+		sp.contrasts<-makeContrasts(Par=(mel.par+sec.par+sim.par)/3-(mel.ctl+sec.ctl+sim.ctl)/3, 
+			MelxPar=(mel.par-mel.ctl), SecxPar=(sec.par-sec.ctl), SimxPar=(sim.par-sim.ctl), #YakxPar=(yak.par-yak.ctl), 
 			MelSimxPar=(mel.par+sim.par)/2-(mel.ctl+sim.ctl)/2,
 			MelSimSecxPar=(mel.par+sec.par+sim.par)/3-(mel.ctl+sec.ctl+sim.ctl)/3,
 			levels=sp.design)
@@ -145,15 +146,19 @@ for (t in time){
 		sp.FDR <- p.adjust(sp.lrt$table$PValue, method="BH")
 		summary(sp.de <- decideTestsDGE(sp.lrt,adjust.method="BH", p=0.05))
 		sp.detags <- rownames(sp.dge.keep)[as.logical(sp.de)]
+		# For MA plot		
+		if(i=="Par"){
+		sp.dge.par<-DGEList(counts=sp.counts, group=sp.targets$treatment,genes=rownames(sp.counts))
 		svg(paste("figures/MA_sp",t,i,".svg",sep="_"))
-		plotSmear(sp.disp,de.tags=sp.detags,pch=16,cex=0.8)
+		plotSmear(sp.dge.par,de.tags=sp.detags,pch=16,cex=0.8)
 		dev.off()
+		}
 		sp.logFC<-sp.lrt$table$logFC[as.logical(sp.de)]
 		m<-match(sp.detags,orthologs$V1)
 		cg<-orthologs[m,]$V2
 		pTable<-data.frame(FB_mel=sp.dge.keep$genes[as.logical(sp.de),],
 			CG=cg,logFC=sp.logFC,FDR=sp.FDR[as.logical(sp.de)])
-		# Keep only genes that have a minimum logFC of 2
+		# Keep only genes that have a minimum FC of 2
 		pTable<-pTable[which(abs(pTable$logFC)>1),]
 		pTable.i.t<-assign(paste("LRT.pTable.sp",i,t,sep="."),pTable)
 		

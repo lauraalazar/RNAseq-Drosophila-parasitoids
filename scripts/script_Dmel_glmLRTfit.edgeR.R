@@ -80,11 +80,12 @@ for (t in time){
 
 	#Estimate dispersion
 	mel.disp <- estimateDisp(mel.dge.keep, mel.design, robust=TRUE)
+
 	#  plotBCV(sp.disp)
-	mel.fit <- glmFit(mel.disp, mel.design, robust=TRUE)
-	# plotQLDisp(sp.fit)
-	mel.lrt <- glmLRT(mel.fit, contrast=mel.contrasts)		
-	mel.FDR <- p.adjust(mel.lrt$table$PValue, method="BH")
+		mel.fit <- glmFit(mel.disp, mel.design, robust=TRUE)
+		# plotQLDisp(sp.fit)
+		mel.lrt <- glmLRT(mel.fit, contrast=mel.contrasts)		
+		mel.FDR <- p.adjust(mel.lrt$table$PValue, method="BH")
 
 	for (i in colnames(mel.contrasts)){
 		mel.lrt <- glmLRT(mel.fit, contrast=mel.contrasts[,i])	
@@ -92,9 +93,18 @@ for (t in time){
 		#sp.lrt.tagwise<-glmLRT(sp.fit.tagwise, contrast=sp.contrasts[,i])
 		summary(mel.de <- decideTestsDGE(mel.lrt,adjust.method="BH", p=0.05))
 		mel.detags <- rownames(mel.dge.keep)[as.logical(mel.de)]
+		#For MA plots
+		if(i=="CvsS.ctl"){
+		mel.dge.sel<-DGEList(counts=mel.counts, group=mel.targets$line,genes=mel.genes)
 		svg(paste("figures/MA_mel",t,i,".svg",sep="_"))
-		plotSmear(mel.disp,de.tags=mel.detags,pch=16,cex=0.8)
+		plotSmear(mel.dge.sel,de.tags=mel.detags,pch=16,cex=0.8)
 		dev.off()
+		}else if(i=="Par"){
+		mel.dge.par<-DGEList(counts=mel.counts, group=mel.targets$treatment,genes=mel.genes)
+		svg(paste("figures/MA_mel",t,i,".svg",sep="_"))
+		plotSmear(mel.dge.par,de.tags=mel.detags,pch=16,cex=0.8)
+		dev.off()
+		}
 		mel.logFC<-mel.lrt$table$logFC[as.logical(mel.de)]
 		cg=FB_CG[mel.dge.keep$genes[as.logical(mel.de),],]$CG
 		pTable<-data.frame(FB_mel=mel.dge.keep$genes[as.logical(mel.de),],

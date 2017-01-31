@@ -139,20 +139,20 @@ show.DEgenes<-function(FBid=NULL, tdata=NULL, cov=NULL, cg=NULL, q=NULL){#tdata=
     gene<-which(rownames(tdata)==FBid) 
     y<-as.numeric(tdata[gene,])
     y<-log2(y+1) #for log2 count data
-    interaction.plot(cov$line,cov$treatment,y,
+    interaction.plot(droplevels(cov$line),droplevels(cov$treatment),y,
     ylim=c(min(y),max(y)),
     ylab="Log2(Counts Per Million)",
     xlab="Line",
     legend=FALSE,
     col=c("blue","red"))
-    #points(rep(1:4, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")
-    #points(rep(1:4, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue") 
+    points(rep(1:4, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")
+    points(rep(1:4, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue") 
     #points(rep(1:4, each=5)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue")#comment this out for yak.50h
     #comment this out when completely excluding yak
-    points(rep(1:3, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue")
-    points(rep(1:3, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")    
+#    points(rep(1:3, each=6)[cov$treatment=="ctl"],y[cov$treatment=="ctl"],pch=17,col="blue")
+#    points(rep(1:3, each=6)[cov$treatment=="par"],y[cov$treatment=="par"],pch=19,col="red")    
     #label the replicates
-#    text(rep(1:4,1),y[cov$treatment=="par" & cov$Batch==1]+0.1,"b1")
+#    text(rep(1:4,1),y[cov$treatment=="par" & cov$SBatch==1]+0.1,"b1")
 #    text(rep(1:4,1),y[cov$treatment=="par" & cov$Batch==2]+0.1,"b2")
 #    text(rep(1:4,1),y[cov$treatment=="par" & cov$Batch==3]+0.1,"b3")
 #    text(rep(1:4,1),y[cov$treatment=="ctl" & cov$Batch==3]+0.1,"b3")
@@ -163,26 +163,49 @@ show.DEgenes<-function(FBid=NULL, tdata=NULL, cov=NULL, cg=NULL, q=NULL){#tdata=
     title(main=paste(cg,"(", FBid, ")", sep=" "), sub=paste("FDR=", signif(q , digits=4)))
 }
 
-pdf("figures/CPMplots_LRTmelPar_5h_batch.pdf", paper="a4", height=10)
+pdf("figures/CPMplots_LRTmel_5h.pdf", paper="a4", height=10)
 par(mfrow=c(4,3))
-for (j in pTable.mel.Par.5[order(pTable.mel.Par.5$FDR),]$FBgn){
+for (j in LRT.pTable.mel.Par.5[order(LRT.pTable.mel.Par.5$FDR),]$FB_mel){
  show.DEgenes(j,mel.cpm.5,mel.targets.5,
- pTable.mel.Par.5[which(pTable.mel.Par.5$FBgn_mel==j),]$CG,
- pTable.mel.Par.5[which(pTable.mel.Par.5$FBgn_mel==j),]$FDR)
+ LRT.pTable.mel.Par.5[which(LRT.pTable.mel.Par.5$FB_mel==j),]$CG,
+ LRT.pTable.mel.Par.5[which(LRT.pTable.mel.Par.5$FB_mel==j),]$FDR)
  }
 dev.off()
 
 
-pdf("figures/CPMplots_melPar_50h_batch.pdf", paper="a4", height=10)
+pdf("figures/CPMplots_LRTmel_50h.pdf", paper="a4", height=10)
 par(mfrow=c(4,3))
-for (j in pTable.mel.Par.50[order(pTable.mel.Par.50$FDR),]$FBgn){
+for (j in LRT.pTable.mel.Par.50[order(LRT.pTable.mel.Par.50$FDR),]$FB_mel){
  show.DEgenes(j,mel.cpm.50,mel.targets.50,
- pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$CG,
- pTable.mel.Par.50[which(pTable.mel.Par.50$FBgn_mel==j),]$FDR)
+ LRT.pTable.mel.Par.50[which(LRT.pTable.mel.Par.50$FB_mel==j),]$CG,
+ LRT.pTable.mel.Par.50[which(LRT.pTable.mel.Par.50$FB_mel==j),]$FDR)
+ }
+dev.off()
+
+#This only shows spALL
+pdf("figures/CPMplots_LRTspAll_5h.pdf", paper="a4", height=10)
+par(mfrow=c(4,3))
+for (j in LRT.pTable.sp.Par.5[order(LRT.pTable.sp.Par.5$FDR),]$FB_mel){
+ show.DEgenes(j,sp.cpm.5,sp.targets.5,
+ LRT.pTable.sp.Par.5[which(LRT.pTable.sp.Par.5$FB_mel==j),]$CG,
+ LRT.pTable.sp.Par.5[which(LRT.pTable.sp.Par.5$FB_mel==j),]$FDR)
+ }
+dev.off()
+
+# Excluding yak at 50 hours
+pdf("figures/CPMplots_LRTspAll_50h.pdf", paper="a4", height=10)
+par(mfrow=c(3,3))
+for (j in LRT.pTable.sp.Par.50[order(LRT.pTable.sp.Par.50$FDR),]$FB_mel){
+ show.DEgenes(j,
+ sp.cpm.50,
+ sp.targets.50,
+ LRT.pTable.sp.Par.50[which(LRT.pTable.sp.Par.50$FB_mel==j),]$CG,
+ LRT.pTable.sp.Par.50[which(LRT.pTable.sp.Par.50$FB_mel==j),]$FDR)
  }
 dev.off()
 
 
+#This binds spAll and spClade
 pdf("figures/CPMplots_LRTsp_5h.pdf", paper="a4", height=10)
 LRT.pTable.sp.All.5<-
 rbind(LRT.pTable.sp.Clade.5,
@@ -357,13 +380,14 @@ dev.off()
 ### Mel
 #5 hours
 matrix.mel.5<-mel.cpm.5[which(rownames(mel.cpm.5)%in%
-LRT.pTable.mel.Par.5$FBgn_mel),]
+LRT.pTable.mel.Par.5$FB_mel),]
 
-m<-match(rownames(matrix.mel.5),LRT.pTable.mel.Par.5$FBgn_mel)
+m<-match(rownames(matrix.mel.5),LRT.pTable.mel.Par.5$FB_mel)
 s<-match(colnames(matrix.mel.5),mel.targets.5$sample)
-rownames(matrix.mel.5)<-LRT.pTable.mel.Par.5[m,]$CG
+rownames(matrix.mel.5)[which(!is.na(LRT.pTable.mel.Par.5[m,]$CG))]<-
+as.character(LRT.pTable.mel.Par.5[which(!is.na(LRT.pTable.mel.Par.5[m,]$CG)),]$CG) #replace for CG except when it is NA
 colnames(matrix.mel.5)<-
-paste(mel.targets.5[s,]$line,mel.targets.5[s,]$treatment,sep=".")
+paste(mel.targets.5[s,]$line,mel.targets.5[s,]$treatment,mel.targets.5[s,]$Batch,sep=".")
 hr<-hclust(as.dist(1-cor(t(as.matrix(matrix.mel.5)), method = "pearson")))
 hc<-hclust(as.dist(1-cor(as.matrix(matrix.mel.5), method = "pearson")),method="ward.D2" )
 heatmap.2(log(matrix.mel.5+1),col=topo.colors(75), 
@@ -373,13 +397,14 @@ heatmap.2(log(matrix.mel.5+1),col=topo.colors(75),
 
 #50 hours
 matrix.mel.50<-mel.cpm.50[which(rownames(mel.cpm.50)%in%
-LRT.pTable.mel.Par.50$FBgn_mel),]
-
-m<-match(rownames(matrix.mel.50),LRT.pTable.mel.Par.50$FBgn_mel)
+LRT.pTable.mel.Par.50$FB_mel),]
+rownames(matrix.mel.50)[which(!is.na(LRT.pTable.mel.Par.50[m,]$CG))]<-
+as.character(LRT.pTable.mel.Par.50[which(!is.na(LRT.pTable.mel.Par.50[m,]$CG)),]$CG)
+m<-match(rownames(matrix.mel.50),LRT.pTable.mel.Par.50$FB_mel)
 s<-match(colnames(matrix.mel.50),mel.targets.50$sample)
-rownames(matrix.mel.50)<-LRT.pTable.mel.Par.50[m,]$CG
+
 colnames(matrix.mel.50)<-
-paste(mel.targets.50[s,]$line,mel.targets.50[s,]$treatment,sep=".")
+paste(mel.targets.50[s,]$line,mel.targets.50[s,]$treatment,mel.targets.50[s,]$Batch,sep=".")
 hr<-hclust(as.dist(1-cor(t(as.matrix(matrix.mel.50)), method = "pearson")))
 hc<-hclust(as.dist(1-cor(as.matrix(matrix.mel.50), method = "pearson")),method="ward.D2" )
 heatmap.2(log(matrix.mel.50+1),col=topo.colors(75), 
@@ -390,18 +415,23 @@ heatmap.2(log(matrix.mel.50+1),col=topo.colors(75),
 ### All spp and time points
 #Take a list of all significant FBgn that have an ortholog in mel 
 #(does it make sense to also include those that do not have orthologs in Dmel?)
-allFB<-c(as.character(LRT.pTable.sp.All.5$FB_mel),as.character(LRT.pTable.mel.Par.5$FB_mel),
-	 as.character(LRT.pTable.sp.All.50$FB_mel),as.character(LRT.pTable.mel.Par.50$FB_mel),
-	 as.character(LRT.pTable.sim.5$FB_mel),as.character(LRT.pTable.sim.50$FB_mel),
-	 as.character(LRT.pTable.sec.5$FB_mel),as.character(LRT.pTable.sec.50$FB_mel),
-	 as.character(LRT.pTable.yak.5$FB_mel))
+allFB<-c(as.character(LRT.pTable.mel.Par.5[,1]),
+	    as.character(LRT.pTable.mel.Par.50[,1]),
+	    as.character(LRT.pTable.sp.Par.5[!is.na(LRT.pTable.sp.Par.5$FB_mel),]$FB_mel), #has orth in mel
+	    as.character(LRT.pTable.sp.Par.50[!is.na(LRT.pTable.sp.Par.50$FB_mel),]$FB_mel), 
+	    as.character(LRT.pTable.sim.5[!is.na(LRT.pTable.sim.5$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.sim.50[!is.na(LRT.pTable.sim.50$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.sec.5[!is.na(LRT.pTable.sec.5$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.sec.50[!is.na(LRT.pTable.sec.50$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.yak.5[!is.na(LRT.pTable.yak.5$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.yak.50[!is.na(LRT.pTable.yak.50$FB_mel),]$FB_mel))
+
 
 # Filter duplicates
-FB<-unique(allFB[which(!is.na(allFB))])
-
+FB<-unique(allFB)
 # Initiate a matrix with FB as rows and line.time as columns
 targets<-read.table("../targets.txt",header=T)
-targets<-targets[-c(48),] #yak48
+targets<-targets[-which(targets$line=="yak" & targets$time==50),] #remove yak at 50
 targets$line.time<-as.factor(paste(targets$line,targets$time,sep="."))
 cols = levels(targets$line.time)
 
@@ -409,10 +439,6 @@ FoldChange<-matrix(ncol = length(cols), nrow = length(FB))
 colnames(FoldChange)<-cols
 rownames(FoldChange)<-FB
 
-#Fill the matrix with the cpm value from spp_specific normalization 
-#(I think it is better than all species normalization is)
-#Since sp-specific cpm are in each species annotation, this needs to be matched to
-#the melanogaster FB
 for (i in rownames(FoldChange)) {
 	for (j in colnames(FoldChange)){
 		samples_ctl <- targets[which(targets$line.time==j & 	
@@ -450,8 +476,9 @@ for (i in rownames(FoldChange)) {
 		}
 }
 
-
-FoldChange[which(is.na(FoldChange))]<-0
+#Remove rows that have NA -> genes do not exist or do not expressed for that line
+FoldChange<-
+FoldChange[which(!rownames(FoldChange)%in%names(which(is.na(rowSums(FoldChange))))),]
 
 fc<-rownames(FoldChange)
 for(r in c(1:length(fc))){
@@ -472,7 +499,7 @@ ann.dat<-data.frame(humoral=annorder$Humoral,cellular=annorder$Cellular,
 		   Orthology=annorder$Orthology)
 #species order for heatmap
 sp.order<-c("melC1.5","melC2.5","melS1.5","melS2.5","sim.5","sec.5","yak.5",
-"melC1.50","melC2.50","melS1.50","melS2.50","sim.50","sec.50","yak.50")
+"melC1.50","melC2.50","melS1.50","melS2.50","sim.50","sec.50")
 
 #Define clusters
 library(vegan)
@@ -489,7 +516,7 @@ plot(annHeatmap2(FoldChange[,sp.order],
 	col = colorRampPalette(c("black","darkblue", "blue","gold","yellow", "lightgoldenrodyellow"), 
 	space = "rgb")(12),
 	breaks = -6:6,#niceBreaks(c(-3,3),12), #-6:6,
-	scale= "row",#"row", 
+	scale= "none",#"row", 
 	dendrogram = list(Row = list(dendro = as.dendrogram(hr)), Col = list(status="no")), #list(dendro = as.dendrogram(hr))),
 	legend = 3, #3
 	labels = list(Row = list(ncol = 10, cex=0.6), Col = list(cex=0.7)),
@@ -541,53 +568,55 @@ dev.off()
 # the columns. Quantify presence (1) absence(0)
 
 ### All spp and time points
-#Take a list of all significant FBgn that have an ortholog in mel 
-#(does it make sense to also include those that do not have orthologs in Dmel?)
+#Take a list of all significant FBgn with the ID ortholog in mel 
+# and the original FBgn if there are not orthologs
 
-allFB<-c(as.character(LRT.pTable.sp.All.5$FB_mel),as.character(LRT.pTable.mel.Par.5$FB_mel),
-	 as.character(LRT.pTable.sp.All.50$FB_mel),as.character(LRT.pTable.mel.Par.50$FB_mel),
-	 as.character(LRT.pTable.sim.5$FB_mel),as.character(LRT.pTable.sim.50$FB_mel),
-	 as.character(LRT.pTable.sec.5$FB_mel),as.character(LRT.pTable.sec.50$FB_mel),
-	 as.character(LRT.pTable.yak.5$FB_mel))
+allFB_sp<-c(as.character(LRT.pTable.mel.Par.5[,1]),
+	    as.character(LRT.pTable.mel.Par.50[,1]),
+	    as.character(LRT.pTable.sp.Par.5[!is.na(LRT.pTable.sp.All.5$FB_mel),]$FB_mel), #has orth in mel
+	    as.character(LRT.pTable.sp.Par.5[is.na(LRT.pTable.sp.All.5$FB_mel),]$FB_sp),   #does not have orth in mel
+	    as.character(LRT.pTable.sp.Par.50[!is.na(LRT.pTable.sp.All.50$FB_mel),]$FB_mel), 
+	    as.character(LRT.pTable.sp.Par.50[is.na(LRT.pTable.sp.All.50$FB_mel),]$FB_sp),
+	    as.character(LRT.pTable.sim.5[!is.na(LRT.pTable.sim.5$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.sim.5[is.na(LRT.pTable.sim.5$FB_mel),]$FB_sp),
+	    as.character(LRT.pTable.sim.50[!is.na(LRT.pTable.sim.50$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.sim.50[is.na(LRT.pTable.sim.50$FB_mel),]$FB_sp),
+	    as.character(LRT.pTable.sec.5[!is.na(LRT.pTable.sec.5$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.sec.5[is.na(LRT.pTable.sec.5$FB_mel),]$FB_sp),
+	    as.character(LRT.pTable.sec.50[!is.na(LRT.pTable.sec.50$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.sec.50[is.na(LRT.pTable.sec.50$FB_mel),]$FB_sp),
+	    as.character(LRT.pTable.yak.5[!is.na(LRT.pTable.yak.5$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.yak.5[is.na(LRT.pTable.yak.5$FB_mel),]$FB_sp),
+	    as.character(LRT.pTable.yak.50[!is.na(LRT.pTable.yak.50$FB_mel),]$FB_mel),
+	    as.character(LRT.pTable.yak.50[is.na(LRT.pTable.yak.50$FB_mel),]$FB_sp))
 
 # Filter duplicates
-FB<-unique(allFB[which(!is.na(allFB))])
-
-#Rename contrast and pTables
-#allcontrasts_5<-c("SpSpecific_mel_5","SpSpecific_sim_5","SpSpecific_sec_5","SpSpecific_yak_5",
-#		"Allsp_mel_5","Allsp_melsim_5","Allsp_melsimsec_5","Allsp_melsimsecyak_5")
-
-#SpSpecific_mel_5<-LRT.pTable.mel.Par.5
-#SpSpecific_sim_5<-LRT.pTable.sim.5
-#SpSpecific_sec_5<-LRT.pTable.sec.5
-#SpSpecific_yak_5<-LRT.pTable.yak.5
-#Allsp_mel_5<-LRT.pTable.sp.MelxPar.5
-#Allsp_melsim_5<-LRT.pTable.sp.MelSimxPar.5
-#Allsp_melsimsec_5<-LRT.pTable.sp.MelSimSecxPar.5
-#Allsp_melsimsecyak_5<-LRT.pTable.sp.Par.5
+FB_sp<-unique(allFB_sp[!is.na(allFB_sp)]) #unique(allFB_sp)#[which(!is.na(allFB_sp))])
 
 #### 5hours ##########################
 SpSpecific_mel_5<-LRT.pTable.mel.Par.5
 SpSpecific_sim_5<-LRT.pTable.sim.5
 SpSpecific_sec_5<-LRT.pTable.sec.5
 SpSpecific_yak_5<-LRT.pTable.yak.5
-sp_All_5<-LRT.pTable.sp.All.5
-sp_Clade_5<-LRT.pTable.sp.Clade.5
+sp_All_5<-LRT.pTable.sp.Par.5
 allcontrasts_5<-c("SpSpecific_mel_5","SpSpecific_sim_5","SpSpecific_sec_5","SpSpecific_yak_5",
-		"sp_All_5","sp_Clade_5")
+		"sp_All_5")
 
 
 # Initiate a matrix with FB as columns and contrast as rows
-ContrastSets_5<-matrix(nrow = length(FB), ncol = length(allcontrasts_5))
-rownames(ContrastSets_5)<-FB
+ContrastSets_5<-matrix(nrow = length(FB_sp), ncol = length(allcontrasts_5))
+rownames(ContrastSets_5)<-FB_sp
 colnames(ContrastSets_5)<-allcontrasts_5
 
 #Fill the matrix with 1 if the gene is significant in the given contrast
-#and 0 otherwise
+#and 0 otherwise. FIX: until now it only takes genes that have mel ID!!!!! 
 for (i in rownames(ContrastSets_5)) {
 	for (j in colnames(ContrastSets_5)){
-		if(i%in%get(j)$FB_mel==TRUE){
+		if(i%in%get(j)[,1]==TRUE | i%in%get(j)[,2]==TRUE){#if(i%in%get(j)[,2]==TRUE)
 			ContrastSets_5[i,j]<-1
+			#if(!is.na(get(j)$FB_mel[i])==FALSE){
+			#	i<-get(j)$FB_mel[which(get(j)[,1]==i)]
+			#	}	
 		}else{ContrastSets_5[i,j]<-0}	
 	}
 }
@@ -596,56 +625,55 @@ library(UpSetR)
 write.csv(ContrastSets_5,"ContrastSets_5.csv")
 C5<-read.csv("ContrastSets_5.csv")
 
-colnames(C5)<-c("X","Mel specific","Sim specific","Sec specific",
-	"Yak specific","Sp all", "Sp clade")
+colnames(C5)<-c("X","Mel","Sim","Sec","Yak","All spp")
 
 svg("figures/ContrastSets_5.svg",height=6,width=6)
-upset(C5,nsets=6,
-	sets.x.label="DEG",mainbar.y.label="Genes shared by category",
+upset(C5,nsets=5,
+	sets.x.label="DEG",mainbar.y.label="Number of genes in category",
 	name.size=8,
-	sets.bar.color=c("blue","orange","orange","blue","blue","blue"),
+	sets.bar.color=c("blue","blue","orange","blue","blue"),
 	point.size = 4, line.size = 1,
-	main.bar.color= c("green","green","green",
-	"violet","green","violet","violet","violet","violet","violet"))
+	main.bar.color= c("purple","purple","purple",
+	"green","green","green","green","green","green","green"))
 dev.off()
 
 #### 50hours ##########################
 SpSpecific_mel_50<-LRT.pTable.mel.Par.50
 SpSpecific_sim_50<-LRT.pTable.sim.50
 SpSpecific_sec_50<-LRT.pTable.sec.50
+SpSpecific_yak_50<-LRT.pTable.yak.50
 sp_All_50<-LRT.pTable.sp.All.50
-sp_Clade_50<-LRT.pTable.sp.Clade.50
 
-allcontrasts_50<-c("SpSpecific_mel_50","SpSpecific_sim_50","SpSpecific_sec_50",
-		"sp_All_50","sp_Clade_50")
+allcontrasts_50<-c("SpSpecific_mel_50","SpSpecific_sim_50","SpSpecific_sec_50","sp_All_50")
 
 
 # Initiate a matrix with FB as columns and contrast as rows
-ContrastSets_50<-matrix(nrow = length(FB), ncol = length(allcontrasts_50))
-rownames(ContrastSets_50)<-FB
+ContrastSets_50<-matrix(nrow = length(FB_sp), ncol = length(allcontrasts_50))
+rownames(ContrastSets_50)<-FB_sp
 colnames(ContrastSets_50)<-allcontrasts_50
+
 
 #Fill the matrix with 1 if the gene is significant in the given contrast
 #and 0 otherwise
 for (i in rownames(ContrastSets_50)) {
 	for (j in colnames(ContrastSets_50)){
-		if(i%in%get(j)$FB_mel==TRUE){
+		if(i%in%get(j)[,1]==TRUE | i%in%get(j)[,2]==TRUE){#if(i%in%get(j)[,2]==TRUE)
 			ContrastSets_50[i,j]<-1
+			#if(!is.na(get(j)$FB_mel[i])==FALSE){
+			#	i<-get(j)$FB_mel[which(get(j)[,1]==i)]
+			#	}	
 		}else{ContrastSets_50[i,j]<-0}	
 	}
 }
-
 write.csv(ContrastSets_50,"ContrastSets_50.csv")
 C50<-read.csv("ContrastSets_50.csv")
-colnames(C5)<-c("X","Mel specific","Sim specific","Sec specific",
-	"Sp all", "Sp clade")
+colnames(C50)<-c("X","Mel","Sim","Sec","All spp")
 
 svg("figures/ContrastSets_50.svg",height=6,width=6)
 upset(C50,nsets=5,
 	sets.x.label="DEG",mainbar.y.label="Genes shared by category",
 	name.size=8,
-	sets.bar.color=c("blue","orange","orange","blue","blue"),
+	sets.bar.color=c("blue","orange","blue","blue"),
 	point.size = 4, line.size = 1,
-	main.bar.color= c("green","green","green",
-			"violet","violet"))
+	main.bar.color= c("purple","purple","purple","green"))
 dev.off()
