@@ -1,0 +1,7 @@
+Samples	Factor	File
+sample22	ctl	sorted_sample22dedup.bam
+sample34	ctl	sorted_sample34dedup.bam
+sample61	ctl	sorted_sample61dedup.bam
+sample20	par	sorted_sample20dedup.bam
+sample36	par	sorted_sample36dedup.bam
+sample64	par	sorted_sample64dedup.bam
