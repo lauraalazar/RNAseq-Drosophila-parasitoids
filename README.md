@@ -32,6 +32,17 @@ Counts
 ```
 samtools view sample1.sorted.dedup.bam | htseq-count - dmel5.51_converted.gff -s no -q > sample1.counts
 ```
+The counts for all samples are in the folder "counts". These are used to find differential expression using edgeR and dexSeq in R. 
 
-Differential expression
-See scripts for edgeR 
+## Differential expression
+Differential expression was calculated for different sets and normalization functions (LRT and QLfit) using the scripts in folder "scripts":
+1) Species-specific (non-melanogaster sp): script_Dspp_specific_glmLRTfit.edgeR.R and script_Dspp_specific_glmQLfit.edgeR.R
+2) All species together: script_Dspp_all_glmLRTfit.edgeR.R and script_Dspp_all_glmQLfit.edgeR.R
+3) Within lines of D. melanogaster: script_Dmel_glmLRTfit.edgeR.R and script_Dmel_glmQLfit.edgeR.R, and script_Dmel.dexseq.R for differential exon usage
+
+For figures see the script plots.R
+
+
+
+
+
