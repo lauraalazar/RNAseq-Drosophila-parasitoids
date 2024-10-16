@@ -3,7 +3,8 @@ RNAseq analysis of four closely related Drosophila species and two lines of D. m
 experimentally selected for increased resistance after parasitization in two time points (5 and 50 hours). 
 These samples are compared against non parasitized control samples. Each sample consisted of three biological replicates.
 The samples were collected in the summer of 2011 and sequenced in 2012 in Illumina Hiseq2000, paired end 2x100.
-The following steps were followed for each of 84 samples to obtain differentially expressed genes between control and parasitized.
+The following steps were followed for each of 84 samples to obtain differentially expressed genes between control and parasitized. 
+The results are presented in https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-017-3697-3 and the raw data can be downloaded from https://www.ebi.ac.uk/ena/browser/view/PRJEB15540
 
 Quality Control
 ```
